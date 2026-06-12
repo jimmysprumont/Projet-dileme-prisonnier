@@ -7,7 +7,7 @@ Le pipeline genere ses propres donnees, les stocke en Parquet, les transforme av
 ## Stack
 
 - Python pour la simulation.
-- vLLM local CPU, sans Docker, via API OpenAI-compatible.
+- vLLM local CPU, via API OpenAI-compatible.
 - Parquet pour Bronze, Silver et Gold.
 - DuckDB comme moteur analytique local.
 - dbt-duckdb pour transformer Bronze vers Silver puis Gold.
@@ -55,6 +55,20 @@ Sur une machine sans GPU, lancer ensuite un petit modele via vLLM CPU:
 make vllm-serve
 ```
 
+Par defaut, le Makefile limite vLLM pour un MacBook Air 8 Go:
+
+```text
+VLLM_DTYPE=bfloat16
+VLLM_MEMORY_UTILIZATION=0.25
+VLLM_MAX_MODEL_LEN=2048
+```
+
+Sur le backend CPU, le flag vLLM `--gpu-memory-utilization` controle en pratique la fraction de memoire CPU reservee. Si le serveur refuse encore de demarrer par manque de RAM, ferme des applications ou baisse encore:
+
+```bash
+make vllm-serve VLLM_MEMORY_UTILIZATION=0.15 VLLM_MAX_MODEL_LEN=1024
+```
+
 Le modele par defaut est:
 
 ```text
@@ -99,7 +113,7 @@ make test
 
 ## Donnees
 
-Les donnees generees ne sont pas versionnees.
+Les donnees generees ne sont pas versionnees dans git mais sont historisées via run_id.
 
 ```text
 data/bronze/run_id=<run_id>/
