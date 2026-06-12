@@ -61,6 +61,7 @@ Par defaut, le Makefile limite vLLM pour un MacBook Air 8 Go:
 VLLM_DTYPE=bfloat16
 VLLM_MEMORY_UTILIZATION=0.25
 VLLM_MAX_MODEL_LEN=2048
+VLLM_EXTRA_ARGS=--enforce-eager
 ```
 
 Sur le backend CPU, le flag vLLM `--gpu-memory-utilization` controle en pratique la fraction de memoire CPU reservee. Si le serveur refuse encore de demarrer par manque de RAM, ferme des applications ou baisse encore:
@@ -72,8 +73,10 @@ make vllm-serve VLLM_MEMORY_UTILIZATION=0.15 VLLM_MAX_MODEL_LEN=1024
 Le modele par defaut est:
 
 ```text
-Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4
+Qwen/Qwen2.5-0.5B-Instruct
 ```
+
+Le modele GPTQ `Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4` est plus petit, mais il peut echouer sur macOS CPU avec un kernel manquant (`cpu_gemm_wna16`). Le modele non-GPTQ ci-dessus est donc le choix par defaut pour Apple Silicon.
 
 Si vLLM n'est pas lance, le pipeline reste reproductible: les agents IA utilisent un fallback deterministe de type `tit_for_tat`, et la colonne `decision_source` indique `fallback`.
 
