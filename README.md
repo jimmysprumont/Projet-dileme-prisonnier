@@ -23,7 +23,13 @@ make install
 
 Le projet n'utilise pas le cloud et n'utilise pas Docker.
 
-Sur une machine sans GPU, lancer un petit modele via vLLM CPU:
+`make install` n'installe pas vLLM, car son installation CPU native depend fortement de la machine. Installe vLLM separement en suivant la documentation officielle CPU/macOS, puis verifie que la commande suivante repond:
+
+```bash
+vllm --help
+```
+
+Sur une machine sans GPU, lancer ensuite un petit modele via vLLM CPU:
 
 ```bash
 make vllm-serve
@@ -36,6 +42,8 @@ Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4
 ```
 
 Si vLLM n'est pas lance, le pipeline reste reproductible: les agents IA utilisent un fallback deterministe de type `tit_for_tat`, et la colonne `decision_source` indique `fallback`.
+
+Cette decision est volontaire: le correcteur peut executer tout le pipeline sans GPU ni serveur IA, mais le projet sait utiliser vLLM local si le serveur est disponible.
 
 ## Execution
 
