@@ -12,6 +12,7 @@ data/
 
 dbt_prisoners/target/
 dbt_prisoners/logs/
+dbt_prisoners/.user.yml
 logs/
 
 dagster_home/
