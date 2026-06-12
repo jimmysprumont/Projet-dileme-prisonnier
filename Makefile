@@ -3,6 +3,7 @@ PIP ?= .venv/bin/pip
 DBT ?= .venv/bin/dbt
 DAGSTER ?= .venv/bin/dagster
 VLLM_MODEL ?= Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4
+VLLM_DTYPE ?= bfloat16
 
 .PHONY: install test simulate dbt-build run dagster vllm-serve clean-data
 
@@ -27,7 +28,7 @@ dagster:
 	$(DAGSTER) dev -f dagster_project/definitions.py
 
 vllm-serve:
-	VLLM_TARGET_DEVICE=cpu vllm serve $(VLLM_MODEL) --host 127.0.0.1 --port 8000 --dtype float32
+	VLLM_TARGET_DEVICE=cpu vllm serve $(VLLM_MODEL) --host 127.0.0.1 --port 8000 --dtype $(VLLM_DTYPE)
 
 clean-data:
 	$(PYTHON) -m prisoners_dilemma.cli clean-data
