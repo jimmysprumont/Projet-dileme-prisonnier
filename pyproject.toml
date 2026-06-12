@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prisoners-dilemma-etl"
+version = "0.1.0"
+description = "Local ETL/ELT pipeline for iterative prisoners dilemma simulations."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "dagster>=1.11,<1.12",
+  "dagster-dbt>=0.27,<0.28",
+  "dagster-webserver>=1.11,<1.12",
+  "dbt-duckdb>=1.9,<1.10",
+  "duckdb>=1.2,<2",
+  "pandas>=2.2,<3",
+  "pyarrow>=16,<18",
+  "pyyaml>=6,<7",
+  "requests>=2.32,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<9",
+]
+
+[project.scripts]
+prisoners-sim = "prisoners_dilemma.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

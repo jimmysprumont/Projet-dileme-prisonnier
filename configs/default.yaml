@@ -1,0 +1,36 @@
+run:
+  seed: 42
+  run_id: null
+  data_dir: data
+
+simulation:
+  coded_rounds: 200
+  ai_rounds: 20
+  round_bucket_size: 25
+  include_ai: true
+  request_timeout_seconds: 20
+  history_window: 6
+  payoff_matrix:
+    CC: [3, 3]
+    CD: [0, 5]
+    DC: [5, 0]
+    DD: [1, 1]
+
+strategies:
+  coded:
+    - always_cooperate
+    - always_defect
+    - tit_for_tat
+    - random
+    - grim_trigger
+    - generous_tit_for_tat
+  ai_profiles:
+    - name: empathic_ai
+      prompt: "You prefer mutual cooperation and only defect after repeated exploitation."
+    - name: calculator_ai
+      prompt: "You maximize your expected score from the recent history."
+
+vllm:
+  enabled: true
+  base_url: "http://127.0.0.1:8000/v1"
+  model: "Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4"
