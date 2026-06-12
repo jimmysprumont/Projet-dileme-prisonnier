@@ -25,34 +25,37 @@ Le projet n'utilise pas le cloud et n'utilise pas Docker.
 
 `make install` n'installe pas vLLM, car son installation CPU native depend fortement de la machine. Installe vLLM separement en suivant la documentation officielle CPU/macOS, puis verifie que la commande suivante repond:
 
-Sur Mac Apple Silicon, les wheels Linux `manylinux_aarch64` ne sont pas compatibles. Il faut construire vLLM depuis les sources. Depuis le `.venv` du projet:
+Sur Mac Apple Silicon, les wheels Linux `manylinux_aarch64` ne sont pas compatibles. Il faut construire vLLM depuis les sources.
+
+Important: le chemin de ce projet contient des espaces. Torch/Inductor peut echouer pendant le warmup vLLM si vLLM est installe dans ce `.venv`. Installe donc vLLM dans un environnement separe dont le chemin ne contient pas d'espace:
 
 ```bash
 xcode-select --install
-pip install uv
+python3 -m venv /tmp/vllm-env
+/tmp/vllm-env/bin/python -m pip install --upgrade pip uv
 cd /tmp
 git clone https://github.com/vllm-project/vllm.git
 cd vllm
-uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
-uv pip install -e .
+/tmp/vllm-env/bin/uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
+/tmp/vllm-env/bin/uv pip install -e .
 ```
 
 Si tu avais deja clone vLLM dans `/tmp/vllm`, reprends simplement ici:
 
 ```bash
 cd /tmp/vllm
-uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
-uv pip install -e .
+/tmp/vllm-env/bin/uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
+/tmp/vllm-env/bin/uv pip install -e .
 ```
 
 ```bash
-vllm --help
+/tmp/vllm-env/bin/vllm --help
 ```
 
 Sur une machine sans GPU, lancer ensuite un petit modele via vLLM CPU:
 
 ```bash
-make vllm-serve
+make vllm-serve VLLM_BIN=/tmp/vllm-env/bin/vllm
 ```
 
 Par defaut, le Makefile limite vLLM pour un MacBook Air 8 Go:
@@ -67,7 +70,7 @@ VLLM_EXTRA_ARGS=--enforce-eager
 Sur le backend CPU, le flag vLLM `--gpu-memory-utilization` controle en pratique la fraction de memoire CPU reservee. Si le serveur refuse encore de demarrer par manque de RAM, ferme des applications ou baisse encore:
 
 ```bash
-make vllm-serve VLLM_MEMORY_UTILIZATION=0.15 VLLM_MAX_MODEL_LEN=1024
+make vllm-serve VLLM_BIN=/tmp/vllm-env/bin/vllm VLLM_MEMORY_UTILIZATION=0.15 VLLM_MAX_MODEL_LEN=1024
 ```
 
 Le modele par defaut est:
