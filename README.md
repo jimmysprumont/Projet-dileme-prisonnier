@@ -36,16 +36,16 @@ python3 -m venv /tmp/vllm-env
 cd /tmp
 git clone https://github.com/vllm-project/vllm.git
 cd vllm
-/tmp/vllm-env/bin/uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
-/tmp/vllm-env/bin/uv pip install -e .
+/tmp/vllm-env/bin/uv pip install --python /tmp/vllm-env/bin/python -r requirements/cpu.txt --index-strategy unsafe-best-match
+/tmp/vllm-env/bin/uv pip install --python /tmp/vllm-env/bin/python -e .
 ```
 
 Si tu avais deja clone vLLM dans `/tmp/vllm`, reprends simplement ici:
 
 ```bash
 cd /tmp/vllm
-/tmp/vllm-env/bin/uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
-/tmp/vllm-env/bin/uv pip install -e .
+/tmp/vllm-env/bin/uv pip install --python /tmp/vllm-env/bin/python -r requirements/cpu.txt --index-strategy unsafe-best-match
+/tmp/vllm-env/bin/uv pip install --python /tmp/vllm-env/bin/python -e .
 ```
 
 ```bash
