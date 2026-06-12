@@ -1,0 +1,8 @@
+prisoners:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: data/prisoners.duckdb
+      extensions:
+        - parquet

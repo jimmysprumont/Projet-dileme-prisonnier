@@ -1,0 +1,23 @@
+name: prisoners
+version: "1.0.0"
+config-version: 2
+
+profile: prisoners
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - target
+  - logs
+
+models:
+  prisoners:
+    silver:
+      +materialized: table
+    gold:
+      +materialized: table
+
+vars:
+  round_bucket_size: 25

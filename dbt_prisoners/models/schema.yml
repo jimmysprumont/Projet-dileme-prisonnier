@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: silver_rounds
+    columns:
+      - name: run_id
+        tests:
+          - not_null
+      - name: match_id
+        tests:
+          - not_null
+      - name: round_index
+        tests:
+          - not_null
+      - name: player_a_choice
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["C", "D"]
+      - name: player_b_choice
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["C", "D"]
+
+  - name: silver_player_rounds
+    columns:
+      - name: player_id
+        tests:
+          - not_null
+      - name: choice
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["C", "D"]
+
+  - name: tournament_summary
+    columns:
+      - name: run_id
+        tests:
+          - not_null
+      - name: strategy_name
+        tests:
+          - not_null
+      - name: rank
+        tests:
+          - not_null
+
+  - name: matchup_matrix
+    columns:
+      - name: strategy_a
+        tests:
+          - not_null
+      - name: strategy_b
+        tests:
+          - not_null
+
+  - name: behavioral_drift
+    columns:
+      - name: round_bucket
+        tests:
+          - not_null
+
+  - name: forgiveness_index
+    columns:
+      - name: forgiveness_rate
+        tests:
+          - not_null
