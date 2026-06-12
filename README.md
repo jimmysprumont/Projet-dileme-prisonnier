@@ -25,6 +25,26 @@ Le projet n'utilise pas le cloud et n'utilise pas Docker.
 
 `make install` n'installe pas vLLM, car son installation CPU native depend fortement de la machine. Installe vLLM separement en suivant la documentation officielle CPU/macOS, puis verifie que la commande suivante repond:
 
+Sur Mac Apple Silicon, les wheels Linux `manylinux_aarch64` ne sont pas compatibles. Il faut construire vLLM depuis les sources. Depuis le `.venv` du projet:
+
+```bash
+xcode-select --install
+pip install uv
+cd /tmp
+git clone https://github.com/vllm-project/vllm.git
+cd vllm
+uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
+uv pip install -e .
+```
+
+Si tu avais deja clone vLLM dans `/tmp/vllm`, reprends simplement ici:
+
+```bash
+cd /tmp/vllm
+uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match
+uv pip install -e .
+```
+
 ```bash
 vllm --help
 ```

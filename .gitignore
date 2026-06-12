@@ -17,4 +17,5 @@ dbt_prisoners/.user.yml
 logs/
 
 dagster_home/
+.tmp_dagster_home_*/
 .env
