@@ -17,6 +17,20 @@ class AIDecision:
 
 
 def parse_ai_decision(content: str) -> AIDecision | None:
+    stripped = content.strip().upper()
+    if stripped in {"C", "COOPERATE"} or stripped.startswith("C "):
+        return AIDecision(
+            choice=Choice.COOPERATE,
+            reasoning="vLLM selected cooperation.",
+            source="vllm",
+        )
+    if stripped in {"D", "DEFECT"} or stripped.startswith("D "):
+        return AIDecision(
+            choice=Choice.DEFECT,
+            reasoning="vLLM selected defection.",
+            source="vllm",
+        )
+
     payload = _extract_json_object(content)
     if payload is None:
         return None
@@ -31,13 +45,15 @@ def parse_ai_decision(content: str) -> AIDecision | None:
     return AIDecision(choice=choice, reasoning=reasoning, source="vllm")
 
 
-def fallback_decision(memory: PlayerMemory) -> AIDecision:
+def fallback_decision(memory: PlayerMemory, reason: str | None = None) -> AIDecision:
     if memory.last is None:
         choice = Choice.COOPERATE
         reasoning = "Fallback tit-for-tat starts with cooperation."
     else:
         choice = memory.last.opponent_choice
         reasoning = "Fallback tit-for-tat copied the opponent previous choice."
+    if reason:
+        reasoning = f"{reason} {reasoning}"
     return AIDecision(choice=choice, reasoning=reasoning, source="fallback")
 
 
@@ -70,12 +86,16 @@ class VLLMClient:
             )
             response.raise_for_status()
             content = response.json()["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError, requests.RequestException, ValueError):
-            return fallback_decision(memory)
+        except requests.Timeout:
+            return fallback_decision(memory, "vLLM request timed out.")
+        except requests.RequestException as exc:
+            return fallback_decision(memory, f"vLLM request failed: {exc.__class__.__name__}.")
+        except (KeyError, IndexError, TypeError, ValueError):
+            return fallback_decision(memory, "vLLM response was not OpenAI-compatible.")
 
         decision = parse_ai_decision(str(content))
         if decision is None:
-            return fallback_decision(memory)
+            return fallback_decision(memory, "vLLM response was not valid decision JSON.")
         return decision
 
     def _payload(
@@ -92,30 +112,21 @@ class VLLMClient:
         my_score = memory.last.my_cumulative_score if memory.last else 0
         opponent_score = memory.last.opponent_cumulative_score if memory.last else 0
 
-        user_prompt = {
-            "profile_name": profile_name,
-            "profile": profile_prompt,
-            "round_index": round_index,
-            "last_my_choices": recent_mine,
-            "last_opponent_choices": recent_opponent,
-            "my_score": my_score,
-            "opponent_score": opponent_score,
-            "instruction": "Return only JSON with keys choice and reasoning. choice must be C or D.",
-        }
+        goal = _compact_goal(profile_name, profile_prompt)
+        user_prompt = (
+            "You must output exactly one letter: C or D. No words. "
+            f"Goal: {goal}. "
+            f"Round {round_index}. My last {_format_choices(recent_mine)}. "
+            f"Opponent last {_format_choices(recent_opponent)}. "
+            f"Score {my_score}/{opponent_score}. Letter:"
+        )
 
         return {
             "model": self.model,
-            "temperature": 0.2,
-            "max_tokens": 80,
+            "temperature": 0,
+            "max_tokens": 1,
             "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "You play the iterative prisoners dilemma. "
-                        "Choose C to cooperate or D to defect. Return strict JSON only."
-                    ),
-                },
-                {"role": "user", "content": json.dumps(user_prompt)},
+                {"role": "user", "content": user_prompt},
             ],
         }
 
@@ -131,3 +142,20 @@ def _extract_json_object(content: str) -> str | None:
     if start == -1 or end == -1 or end < start:
         return None
     return stripped[start : end + 1]
+
+
+def _compact_goal(profile_name: str, profile_prompt: str) -> str:
+    if profile_name == "calculator_ai":
+        return "maximize score"
+    if profile_name == "empathic_ai":
+        return "cooperate unless repeatedly exploited"
+    return (
+        profile_prompt.replace("You ", "")
+        .replace("you ", "")
+        .replace("your ", "")
+        .strip()
+    )
+
+
+def _format_choices(choices: list[str]) -> str:
+    return ",".join(choices) if choices else "none"

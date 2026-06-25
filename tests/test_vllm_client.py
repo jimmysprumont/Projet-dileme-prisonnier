@@ -45,6 +45,16 @@ def test_parse_ai_decision_extracts_json_from_markdown() -> None:
     assert decision.source == "vllm"
 
 
+def test_parse_ai_decision_accepts_single_token_choice() -> None:
+    decision = parse_ai_decision("C to")
+
+    assert decision == AIDecision(
+        choice=Choice.COOPERATE,
+        reasoning="vLLM selected cooperation.",
+        source="vllm",
+    )
+
+
 def test_parse_ai_decision_rejects_invalid_choice() -> None:
     decision = parse_ai_decision('{"choice": "WAIT", "reasoning": "No"}')
 
@@ -76,6 +86,25 @@ def test_vllm_client_returns_fallback_when_request_fails(monkeypatch) -> None:
 
     assert decision.choice is Choice.DEFECT
     assert decision.source == "fallback"
+    assert "vLLM request failed" in decision.reasoning
+
+
+def test_vllm_client_uses_compact_cpu_friendly_payload() -> None:
+    client = VLLMClient(
+        base_url="http://127.0.0.1:8000/v1",
+        model="local-model",
+    )
+
+    payload = client._payload(
+        profile_name="empathic_ai",
+        profile_prompt="Prefer cooperation.",
+        memory=memory_after_opponent_defected(),
+    )
+
+    assert payload["temperature"] == 0
+    assert payload["max_tokens"] == 1
+    assert len(payload["messages"]) == 1
+    assert "exactly one letter" in payload["messages"][0]["content"]
 
 
 def test_vllm_client_returns_model_decision(monkeypatch) -> None:

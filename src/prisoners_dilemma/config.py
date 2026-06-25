@@ -62,11 +62,12 @@ class ProjectConfig:
 
 
 def load_config(path: str | Path) -> ProjectConfig:
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-    return parse_config(raw)
+    config_path = Path(path)
+    raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    return parse_config(raw, base_dir=config_path.parent)
 
 
-def parse_config(raw: dict[str, Any]) -> ProjectConfig:
+def parse_config(raw: dict[str, Any], base_dir: Path | None = None) -> ProjectConfig:
     run = raw["run"]
     simulation = raw["simulation"]
     strategies = raw["strategies"]
@@ -90,7 +91,7 @@ def parse_config(raw: dict[str, Any]) -> ProjectConfig:
         strategies=StrategiesConfig(
             coded=list(strategies["coded"]),
             ai_profiles=[
-                AIProfileConfig(name=str(item["name"]), prompt=str(item["prompt"]))
+                AIProfileConfig(name=str(item["name"]), prompt=_read_ai_prompt(item, base_dir))
                 for item in strategies.get("ai_profiles", [])
             ],
         ),
@@ -99,4 +100,33 @@ def parse_config(raw: dict[str, Any]) -> ProjectConfig:
             base_url=str(vllm["base_url"]),
             model=str(vllm["model"]),
         ),
+    )
+
+
+def _read_ai_prompt(item: dict[str, Any], base_dir: Path | None) -> str:
+    if "prompt_file" not in item:
+        return str(item["prompt"])
+
+    raw_path = Path(str(item["prompt_file"]))
+    candidates = [raw_path] if raw_path.is_absolute() else []
+
+    if base_dir is not None and not raw_path.is_absolute():
+        candidates.extend(
+            [
+                base_dir / raw_path,
+                base_dir.parent / raw_path,
+            ]
+        )
+
+    if not raw_path.is_absolute():
+        candidates.append(raw_path)
+
+    for prompt_path in candidates:
+        if prompt_path.exists():
+            return prompt_path.read_text(encoding="utf-8").strip()
+
+    searched = ", ".join(str(path) for path in candidates)
+    raise FileNotFoundError(
+        f"Prompt file not found for AI profile {item['name']!r}: {raw_path}. "
+        f"Searched: {searched}"
     )

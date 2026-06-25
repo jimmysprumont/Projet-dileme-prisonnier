@@ -61,29 +61,48 @@ make vllm-serve VLLM_BIN=/tmp/vllm-env/bin/vllm
 Par defaut, le Makefile limite vLLM pour un MacBook Air 8 Go:
 
 ```text
-VLLM_DTYPE=bfloat16
-VLLM_MEMORY_UTILIZATION=0.25
-VLLM_MAX_MODEL_LEN=2048
+VLLM_DTYPE=float32
+VLLM_MEMORY_UTILIZATION=0.145
+VLLM_MAX_MODEL_LEN=128
 VLLM_EXTRA_ARGS=--enforce-eager
 ```
 
-Sur le backend CPU, le flag vLLM `--gpu-memory-utilization` controle en pratique la fraction de memoire CPU reservee. Si le serveur refuse encore de demarrer par manque de RAM, ferme des applications ou baisse encore:
+Sur le backend CPU, le flag vLLM `--gpu-memory-utilization` controle en pratique la fraction de memoire CPU reservee. Sur le MacBook Air 8 Go teste, `0.145` demarre avec environ 1.17 GiB de RAM disponible, alors que `0.20` peut deja demander trop de RAM libre. Garde donc la valeur par defaut et ferme des applications si le serveur refuse encore de demarrer.
 
 ```bash
-make vllm-serve VLLM_BIN=/tmp/vllm-env/bin/vllm VLLM_MEMORY_UTILIZATION=0.15 VLLM_MAX_MODEL_LEN=1024
+make vllm-serve VLLM_BIN=/tmp/vllm-env/bin/vllm
 ```
 
 Le modele par defaut est:
 
 ```text
-Qwen/Qwen2.5-0.5B-Instruct
+HuggingFaceTB/SmolLM2-135M-Instruct
 ```
 
-Le modele GPTQ `Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4` est plus petit, mais il peut echouer sur macOS CPU avec un kernel manquant (`cpu_gemm_wna16`). Le modele non-GPTQ ci-dessus est donc le choix par defaut pour Apple Silicon.
+Ce modele est volontairement tres petit pour rester coherent avec une machine sans GPU. Le client IA demande une reponse d'un seul caractere (`C` ou `D`) afin de limiter la generation vLLM CPU.
+
+Le modele GPTQ `Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4` peut echouer sur macOS CPU avec un kernel manquant (`cpu_gemm_wna16`). `Qwen/Qwen2.5-0.5B-Instruct` demarre parfois, mais il peut rester bloque pendant la generation sur un MacBook Air 8 Go. Le modele 135M ci-dessus est donc le choix par defaut.
 
 Si vLLM n'est pas lance, le pipeline reste reproductible: les agents IA utilisent un fallback deterministe de type `tit_for_tat`, et la colonne `decision_source` indique `fallback`.
 
 Cette decision est volontaire: le correcteur peut executer tout le pipeline sans GPU ni serveur IA, mais le projet sait utiliser vLLM local si le serveur est disponible.
+
+## Agents IA
+
+Les agents appeles via vLLM ont chacun leur fichier de prompt:
+
+```text
+agents/empathic_ai.md
+agents/calculator_ai.md
+```
+
+Ils sont references dans `configs/default.yaml` avec `prompt_file`. Cela permet de modifier le comportement d'un agent sans toucher au code Python:
+
+```yaml
+ai_profiles:
+  - name: empathic_ai
+    prompt_file: agents/empathic_ai.md
+```
 
 ## Execution
 
@@ -115,6 +134,14 @@ Tests:
 
 ```bash
 make test
+```
+
+## Dashboard Streamlit
+
+Apres avoir genere les donnees avec `make run`, lancer le dashboard:
+
+```bash
+make dashboard
 ```
 
 ## Donnees

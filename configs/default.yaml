@@ -5,10 +5,10 @@ run:
 
 simulation:
   coded_rounds: 200
-  ai_rounds: 20
+  ai_rounds: 2
   round_bucket_size: 25
   include_ai: true
-  request_timeout_seconds: 20
+  request_timeout_seconds: 90
   history_window: 6
   payoff_matrix:
     CC: [3, 3]
@@ -26,11 +26,11 @@ strategies:
     - generous_tit_for_tat
   ai_profiles:
     - name: empathic_ai
-      prompt: "You prefer mutual cooperation and only defect after repeated exploitation."
+      prompt_file: agents/empathic_ai.md
     - name: calculator_ai
-      prompt: "You maximize your expected score from the recent history."
+      prompt_file: agents/calculator_ai.md
 
 vllm:
   enabled: true
   base_url: "http://127.0.0.1:8000/v1"
-  model: "Qwen/Qwen2.5-0.5B-Instruct"
+  model: "HuggingFaceTB/SmolLM2-135M-Instruct"
